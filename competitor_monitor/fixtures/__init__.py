@@ -1,13 +1,16 @@
 """Bundled sample data for offline demo and tests.
 
 This is SYNTHETIC data — clearly fake numbers — so the whole pipeline
-(collect -> store -> analyze -> report) can be exercised without any API keys.
-It is NOT real competitor data. Use real API keys (docs/API_KEYS.md) to get
-real numbers. Two snapshot dates a week apart are included so week-over-week
-trend analysis has something to compute.
+(collect -> store -> analyze -> report -> dashboard) can be exercised without
+any API keys. It is NOT real competitor data; use real API keys
+(docs/API_KEYS.md) to get real numbers.
+
+The generator emits 8 WEEKLY snapshots per competitor so the dashboard time
+series and week-over-week trend analysis both have real history to chart.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from ..models import (
@@ -20,55 +23,95 @@ from ..models import (
 )
 
 _TODAY = datetime.now(timezone.utc).date()
-_LAST_WEEK = _TODAY - timedelta(days=7)
+_WEEKS = 8  # weeks of synthetic history
+
+
+@dataclass(frozen=True)
+class _Spec:
+    name: str
+    ig_username: str
+    yt_channel_id: str
+    keyword: str
+    ig_followers0: int        # followers at the oldest week
+    ig_weekly_growth: int
+    yt_subs0: int
+    yt_weekly_growth: int
+    search: dict              # {source: total} at the latest date
+    datalab0: float           # datalab ratio at the oldest week
+    datalab_weekly: float     # weekly ratio change
+    top_like: int             # like count of the headline IG post
+    top_views: int            # views of the headline YT video
+
+
+# Synthetic competitor set. Numbers are illustrative, not real.
+_SPECS = [
+    _Spec("New Balance Kids", "newbalancekids", "UCnbk", "뉴발란스 키즈",
+          150000, 700, 40800, 130, {"blog": 1820, "cafearticle": 4310, "news": 240}, 42.0, 4.3, 6740, 128000),
+    _Spec("Fila Kids", "filakids", "UCfila", "휠라 키즈",
+          87000, 230, 22500, 60, {"blog": 760, "cafearticle": 1990, "news": 95}, 30.0, 2.1, 2980, 54000),
+    _Spec("Adidas Kids", "adidaskids", "UCadidas", "아디다스 키즈",
+          205000, 1200, 95000, 400, {"blog": 2450, "cafearticle": 5120, "news": 410}, 55.0, 3.8, 8900, 240000),
+    _Spec("Nike Kids", "nikekids", "UCnike", "나이키 키즈",
+          340000, 1500, 130000, 600, {"blog": 3010, "cafearticle": 6740, "news": 520}, 61.0, 4.9, 11200, 360000),
+    _Spec("Play Kids", "playkids_official", "UCplay", "플레이 키즈",
+          29000, 320, 8400, 90, {"blog": 540, "cafearticle": 1230, "news": 60}, 22.0, 5.5, 1840, 31000),
+]
+
+
+def _date(weeks_ago: int) -> str:
+    return (_TODAY - timedelta(weeks=weeks_ago)).isoformat()
 
 
 def demo_records() -> list[object]:
-    """Return a full set of synthetic records spanning two snapshot dates."""
-    today = _TODAY.isoformat()
-    prev = _LAST_WEEK.isoformat()
+    """Return synthetic records for all competitors across 8 weekly snapshots."""
     recs: list[object] = []
+    today = _date(0)
 
-    # --- Instagram: two profile snapshots (growth) + a few posts -----------
-    recs += [
-        IgProfileSnapshot("New Balance Kids", "newbalancekids", 152300, 412, snapshot_date=prev),
-        IgProfileSnapshot("New Balance Kids", "newbalancekids", 154900, 418, snapshot_date=today),
-        IgProfileSnapshot("Fila Kids", "filakids", 88100, 305, snapshot_date=prev),
-        IgProfileSnapshot("Fila Kids", "filakids", 88650, 309, snapshot_date=today),
-    ]
-    recs += [
-        IgMedia("New Balance Kids", "nbk_1", "봄 신상 키즈 스니커즈 출시 🌸 #뉴발란스키즈", 4820, 132,
-                f"{today}T02:00:00+0000", "https://instagram.com/p/nbk_1"),
-        IgMedia("New Balance Kids", "nbk_2", "가정의 달 패밀리룩 이벤트", 3110, 88,
-                f"{prev}T05:00:00+0000", "https://instagram.com/p/nbk_2"),
-        IgMedia("New Balance Kids", "nbk_3", "327 키즈 컬러 추가", 6740, 201,
-                f"{today}T08:30:00+0000", "https://instagram.com/p/nbk_3"),
-        IgMedia("Fila Kids", "fk_1", "디즈니 콜라보 키즈 컬렉션", 2980, 74,
-                f"{today}T03:00:00+0000", "https://instagram.com/p/fk_1"),
-    ]
+    for s in _SPECS:
+        # --- weekly IG / YT snapshots (oldest -> newest) -------------------
+        for i in range(_WEEKS):
+            weeks_ago = _WEEKS - 1 - i
+            d = _date(weeks_ago)
+            recs.append(IgProfileSnapshot(
+                s.name, s.ig_username,
+                followers_count=s.ig_followers0 + s.ig_weekly_growth * i,
+                media_count=300 + i,
+                snapshot_date=d,
+            ))
+            recs.append(YtChannelSnapshot(
+                s.name, s.yt_channel_id,
+                subscriber_count=s.yt_subs0 + s.yt_weekly_growth * i,
+                view_count=5_000_000 + i * 60_000,
+                video_count=300 + i,
+                snapshot_date=d,
+            ))
+            # weekly DataLab relative-trend point
+            recs.append(NaverDataLabPoint(
+                s.keyword, d, round(s.datalab0 + s.datalab_weekly * i, 1),
+            ))
 
-    # --- YouTube: two channel snapshots + recent videos --------------------
-    recs += [
-        YtChannelSnapshot("New Balance Kids", "UCnbk", 41200, 5120000, 318, snapshot_date=prev),
-        YtChannelSnapshot("New Balance Kids", "UCnbk", 41850, 5180000, 320, snapshot_date=today),
-    ]
-    recs += [
-        YtVideo("New Balance Kids", "vid_nbk_1", "UCnbk", "327 키즈 봄 캠페인 필름",
-                f"{today}T01:00:00Z", 128000, 3400, 210),
-        YtVideo("New Balance Kids", "vid_nbk_2", "UCnbk", "키즈 풋스타일 가이드",
-                f"{prev}T01:00:00Z", 54000, 1200, 65),
-    ]
+        # --- a few recent IG posts (engagement + top content) --------------
+        recs += [
+            IgMedia(s.name, f"{s.ig_username}_1", f"{s.keyword} 봄 신상 출시 🌸",
+                    s.top_like, s.top_like // 30, f"{today}T02:00:00+0000",
+                    f"https://instagram.com/p/{s.ig_username}_1"),
+            IgMedia(s.name, f"{s.ig_username}_2", f"{s.keyword} 가정의 달 이벤트",
+                    int(s.top_like * 0.6), s.top_like // 45, f"{_date(1)}T05:00:00+0000",
+                    f"https://instagram.com/p/{s.ig_username}_2"),
+        ]
 
-    # --- Naver Search buzz (latest date) -----------------------------------
-    for src, total in (("blog", 1820), ("cafearticle", 4310), ("news", 240)):
-        recs.append(NaverSearchCount("뉴발란스 키즈", src, total, snapshot_date=today))
-    for src, total in (("blog", 760), ("cafearticle", 1990), ("news", 95)):
-        recs.append(NaverSearchCount("휠라 키즈", src, total, snapshot_date=today))
+        # --- recent YT videos ----------------------------------------------
+        recs += [
+            YtVideo(s.name, f"{s.yt_channel_id}_v1", s.yt_channel_id,
+                    f"{s.keyword} 봄 캠페인 필름", f"{today}T01:00:00Z",
+                    s.top_views, s.top_views // 40, s.top_views // 600),
+            YtVideo(s.name, f"{s.yt_channel_id}_v2", s.yt_channel_id,
+                    f"{s.keyword} 풋스타일 가이드", f"{_date(1)}T01:00:00Z",
+                    int(s.top_views * 0.4), s.top_views // 90, s.top_views // 1200),
+        ]
 
-    # --- Naver DataLab relative trend (weekly, rising) ---------------------
-    base = _TODAY - timedelta(weeks=7)
-    for i, ratio in enumerate([42.0, 48.5, 51.0, 55.2, 60.0, 58.3, 67.4, 72.1]):
-        period = (base + timedelta(weeks=i)).isoformat()
-        recs.append(NaverDataLabPoint("뉴발란스 키즈", period, ratio))
+        # --- Naver search buzz (latest date) -------------------------------
+        for src, total in s.search.items():
+            recs.append(NaverSearchCount(s.keyword, src, total, snapshot_date=today))
 
     return recs

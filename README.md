@@ -104,7 +104,7 @@ cp .env.example .env
 ### 3. 실행
 
 ```bash
-# 수집 + 리포트 한 번에 (권장)
+# 수집 + 리포트 + 대시보드 한 번에 (권장)
 python -m competitor_monitor.cli run
 
 # 수집만
@@ -112,6 +112,9 @@ python -m competitor_monitor.cli collect
 
 # 리포트만 (이미 수집된 데이터 기반)
 python -m competitor_monitor.cli report
+
+# 정적 HTML 대시보드만 (이미 수집된 데이터 기반)
+python -m competitor_monitor.cli dashboard
 ```
 
 ### API 키 없이 체험하기 (`--demo`)
@@ -120,7 +123,34 @@ python -m competitor_monitor.cli report
 python -m competitor_monitor.cli run --demo
 ```
 
-`--demo` 플래그를 사용하면 번들된 샘플 데이터를 로드하므로 API 키 없이도 리포트 출력을 확인할 수 있습니다. 시스템 도입 전 UI·구조를 검토할 때 유용합니다.
+`--demo` 플래그를 사용하면 번들된 샘플 데이터(경쟁사 5종 · 8주 시계열)를 로드하므로 API 키 없이도 리포트·대시보드 출력을 확인할 수 있습니다. 시스템 도입 전 UI·구조를 검토할 때 유용합니다.
+
+---
+
+## 대시보드
+
+두 가지 형태의 대시보드를 제공합니다.
+
+### 1) 정적 HTML 대시보드 (서버 불필요)
+
+```bash
+python -m competitor_monitor.cli dashboard          # 수집된 데이터 기반
+python -m competitor_monitor.cli dashboard --demo   # 샘플 데이터로 미리보기
+```
+
+`reports/dashboard.html` 한 파일로 생성되며, 브라우저로 바로 열거나 이메일·GitHub
+Actions 아티팩트로 공유할 수 있습니다. Chart.js(CDN)로 팔로워·구독자 추이, 검색
+점유율(SoV), DataLab 트렌드, 인게이지먼트율 차트와 주목 콘텐츠 표를 렌더링합니다.
+
+### 2) Streamlit 인터랙티브 대시보드
+
+```bash
+streamlit run dashboard.py
+```
+
+경쟁사 필터, KPI 타일, 시계열 라인 차트 등을 인터랙티브하게 탐색할 수 있습니다.
+사이드바에서 **"데모 데이터 사용"** 을 켜면 API 키 없이도 즉시 확인할 수 있습니다.
+(`pip install -r requirements.txt` 시 `streamlit`·`pandas`가 함께 설치됩니다.)
 
 ---
 

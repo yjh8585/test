@@ -1,9 +1,12 @@
 """Command-line orchestrator.
 
-    python -m competitor_monitor.cli collect   # gather data into SQLite
-    python -m competitor_monitor.cli report    # analyze stored data -> report
-    python -m competitor_monitor.cli run        # collect + report
-    python -m competitor_monitor.cli run --demo # no API keys: load sample data
+    python -m competitor_monitor.cli collect    # gather data into SQLite
+    python -m competitor_monitor.cli report     # analyze stored data -> report
+    python -m competitor_monitor.cli dashboard  # build static HTML dashboard
+    python -m competitor_monitor.cli run         # collect + report + dashboard
+    python -m competitor_monitor.cli run --demo  # no API keys: load sample data
+
+For the interactive dashboard:  streamlit run dashboard.py
 
 The orchestrator owns persistence: collectors return records, the CLI saves
 them. This keeps each source independent and the data flow easy to follow.
@@ -17,6 +20,7 @@ import sys
 from .analysis import build_analysis, summarize_creative
 from .collectors import build_collectors
 from .config import load_secrets, load_settings
+from .dashboard_html import write_dashboard
 from .fixtures import demo_records
 from .reporting import write_report
 from .storage import Storage
@@ -74,9 +78,17 @@ def do_report(storage: Storage, settings, secrets) -> dict:
     return paths
 
 
+def do_dashboard(storage: Storage, settings) -> str:
+    """Generate the self-contained static HTML dashboard from stored data."""
+    log.info("building static HTML dashboard...")
+    path = write_dashboard(storage, settings)
+    log.info("dashboard written: %s", path)
+    return path
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="competitor_monitor", description=__doc__)
-    p.add_argument("command", choices=["collect", "report", "run"])
+    p.add_argument("command", choices=["collect", "report", "dashboard", "run"])
     p.add_argument("-c", "--config", default="config.yaml", help="path to config.yaml")
     p.add_argument("--env", default=".env", help="path to .env secrets file")
     p.add_argument("--demo", action="store_true", help="load bundled sample data (no API keys)")
@@ -92,12 +104,16 @@ def main(argv: list[str] | None = None) -> int:
     secrets = load_secrets(args.env)
 
     with Storage(settings.db_path) as storage:
-        if args.command in ("collect", "run"):
+        # `dashboard --demo` should still seed data so it renders without keys.
+        if args.command in ("collect", "run") or (args.command == "dashboard" and args.demo):
             do_collect(storage, settings, secrets, demo=args.demo)
         if args.command in ("report", "run"):
             paths = do_report(storage, settings, secrets)
             print(f"\n✓ Report: {paths['markdown_path']}")
             print(f"✓ HTML:   {paths['html_path']}")
+        if args.command in ("dashboard", "run"):
+            dash = do_dashboard(storage, settings)
+            print(f"✓ Dashboard: {dash}")
     return 0
 
 

@@ -6,5 +6,10 @@ python-dotenv>=1.0
 # Optional: LLM creative summary (only needed if you enable analysis.llm)
 anthropic>=0.40
 
+# Interactive dashboard (streamlit run dashboard.py). The static HTML
+# dashboard (cli `dashboard` command) needs no extra deps.
+streamlit>=1.30
+pandas>=2.0
+
 # Dev / test
 pytest>=8.0

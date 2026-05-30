@@ -7,17 +7,34 @@ instagram:
   ig_user_id: "17841400000000000"   # <- replace with your IG user id
 
 competitors:
+  # NOTE: instagram_username / youtube_channel_id below are best-guess public
+  # handles — VERIFY each one (handles change) before a real run. See
+  # docs/API_KEYS.md for how to find an account's IG username and UC… channel id.
+  # Keywords drive the Naver buzz/DataLab signal and are the most reliable input.
   - name: "New Balance Kids"
-    instagram_username: "newbalancekids"   # public business/creator account
+    instagram_username: "newbalancekids"
+    youtube_channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"   # <- replace with real UC… id
+    keywords: ["뉴발란스 키즈", "뉴발란스키즈", "New Balance Kids"]
+
+  - name: "Fila Kids"
+    instagram_username: "filakids"
     youtube_channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
-    keywords:
-      - "뉴발란스 키즈"
-      - "뉴발란스키즈"
-      - "New Balance Kids"
-  # Add more competitors here — the pipeline handles any number.
-  # - name: "Fila Kids"
-  #   instagram_username: "filakids"
-  #   keywords: ["휠라 키즈"]
+    keywords: ["휠라 키즈", "휠라키즈", "Fila Kids"]
+
+  - name: "Adidas Kids"
+    instagram_username: "adidaskids"
+    youtube_channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+    keywords: ["아디다스 키즈", "아디다스키즈", "Adidas Kids"]
+
+  - name: "Nike Kids"
+    instagram_username: "nikekids"
+    youtube_channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+    keywords: ["나이키 키즈", "나이키키즈", "Nike Kids"]
+
+  - name: "Play Kids"
+    instagram_username: "playkids_official"
+    youtube_channel_id: "UCxxxxxxxxxxxxxxxxxxxxxx"
+    keywords: ["플레이 키즈", "플레이키즈", "Play Kids"]
 
 naver:
   # Which Naver Search verticals to count buzz across.
@@ -26,6 +43,14 @@ naver:
   datalab_keyword_groups:
     - groupName: "뉴발란스 키즈"
       keywords: ["뉴발란스 키즈", "뉴발란스키즈"]
+    - groupName: "휠라 키즈"
+      keywords: ["휠라 키즈", "휠라키즈"]
+    - groupName: "아디다스 키즈"
+      keywords: ["아디다스 키즈", "아디다스키즈"]
+    - groupName: "나이키 키즈"
+      keywords: ["나이키 키즈", "나이키키즈"]
+    - groupName: "플레이 키즈"
+      keywords: ["플레이 키즈", "플레이키즈"]
 
 analysis:
   llm:

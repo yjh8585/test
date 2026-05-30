@@ -108,7 +108,7 @@ def test_trend_table_shows_actual_counts(loaded: Storage):
     must line up so the 현재/이전 columns render real numbers, not '-'."""
     md = render_markdown(build_analysis(loaded))
     assert "154,900" in md   # NBK current followers from fixtures
-    assert "41,850" in md    # NBK current subscribers from fixtures
+    assert "41,710" in md    # NBK current subscribers from fixtures
 
 
 def test_render_html_wraps_markdown(loaded: Storage):
