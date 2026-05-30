@@ -78,12 +78,22 @@ def do_report(storage: Storage, settings, secrets) -> dict:
     return paths
 
 
-def do_dashboard(storage: Storage, settings) -> str:
-    """Generate the self-contained static HTML dashboard from stored data."""
+def do_dashboard(storage: Storage, settings) -> dict:
+    """Generate the static HTML dashboard and a PNG image from stored data."""
     log.info("building static HTML dashboard...")
-    path = write_dashboard(storage, settings)
-    log.info("dashboard written: %s", path)
-    return path
+    html_path = write_dashboard(storage, settings)
+    log.info("dashboard written: %s", html_path)
+
+    # PNG export is optional: it needs matplotlib. Don't fail the run if it's
+    # not installed — the HTML dashboard is the primary artifact.
+    png_path = None
+    try:
+        from .dashboard_image import write_dashboard_image
+        png_path = write_dashboard_image(storage, settings)
+        log.info("dashboard image written: %s", png_path)
+    except ImportError:
+        log.warning("matplotlib not installed — skipping PNG dashboard image")
+    return {"html": html_path, "png": png_path}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -113,7 +123,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"✓ HTML:   {paths['html_path']}")
         if args.command in ("dashboard", "run"):
             dash = do_dashboard(storage, settings)
-            print(f"✓ Dashboard: {dash}")
+            print(f"✓ Dashboard (HTML): {dash['html']}")
+            if dash["png"]:
+                print(f"✓ Dashboard (PNG):  {dash['png']}")
     return 0
 
 

@@ -126,3 +126,42 @@ def test_llm_summary_section_optional(loaded: Storage):
     a = build_analysis(loaded)
     assert "AI 크리에이티브" not in render_markdown(a, llm_summary=None)
     assert "AI 크리에이티브" in render_markdown(a, llm_summary={"summary": "테스트 요약"})
+
+
+# --------------------------------------------------------------------------- #
+# Branding & dashboards
+# --------------------------------------------------------------------------- #
+def test_brand_colors_are_stable_and_known():
+    from competitor_monitor.branding import BRAND_COLORS, color_for
+    assert color_for("New Balance Kids") == BRAND_COLORS["New Balance Kids"]
+    # Unknown names get a stable, deterministic fallback colour.
+    assert color_for("미지의 브랜드") == color_for("미지의 브랜드")
+    assert color_for("미지의 브랜드").startswith("#")
+
+
+def test_html_dashboard_uses_brand_colors(loaded: Storage):
+    from competitor_monitor.branding import BRAND_COLORS
+    from competitor_monitor.dashboard_html import build_dashboard_html
+    html = build_dashboard_html(loaded)
+    assert "<canvas" in html
+    # Every known brand colour should appear in the rendered chart config.
+    for hexcol in BRAND_COLORS.values():
+        assert hexcol in html
+
+
+def test_png_dashboard_is_valid_image(loaded: Storage, tmp_path):
+    from competitor_monitor.dashboard_image import build_dashboard_image
+    p = build_dashboard_image(loaded, path=str(tmp_path / "dash.png"))
+    data = open(p, "rb").read()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"   # valid PNG signature
+    assert len(data) > 20000
+
+
+def test_channel_resolver_requires_key(capsys):
+    """Without a YouTube key the resolver must exit 1 with a helpful message,
+    not crash."""
+    from competitor_monitor.tools.resolve_channels import main
+    rc = main(["--config", "config.example.yaml", "--env", "/dev/null"])
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "YOUTUBE_API_KEY" in (captured.out + captured.err)

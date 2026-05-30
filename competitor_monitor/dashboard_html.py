@@ -11,18 +11,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .branding import color_for
+
 if TYPE_CHECKING:
     from .config import Settings
     from .storage import Storage
 
 # Chart.js loaded from CDN — no local assets required
 _CHARTJS_CDN = "https://cdn.jsdelivr.net/npm/chart.js"
-
-# Palette reused across charts for consistent competitor colours
-_PALETTE = [
-    "#4e79a7", "#f28e2b", "#e15759", "#76b7b2",
-    "#59a14f", "#edc948", "#b07aa1", "#ff9da7",
-]
 
 
 # --------------------------------------------------------------------------- #
@@ -73,8 +69,8 @@ def _series_to_chartjs(
 ) -> list[dict]:
     """Convert {competitor: {date: value}} → Chart.js datasets list."""
     datasets = []
-    for i, (competitor, data) in enumerate(series.items()):
-        color = _PALETTE[i % len(_PALETTE)]
+    for competitor, data in series.items():
+        color = color_for(competitor)  # consistent brand colour per competitor
         datasets.append({
             "label": competitor,
             "data": [data.get(d) for d in dates],  # None gaps are fine — Chart.js skips them
@@ -254,7 +250,7 @@ def build_dashboard_html(
     sov = analysis["share_of_voice"]
     sov_labels = [item["keyword"] for item in sov]
     sov_values = [item["share_pct"] for item in sov]
-    sov_colors = [_PALETTE[i % len(_PALETTE)] for i in range(len(sov))]
+    sov_colors = [color_for(item["keyword"]) for item in sov]
 
     # --- DataLab multi-line ---
     dl = analysis["datalab_trend"]
@@ -265,9 +261,9 @@ def build_dashboard_html(
             dl_periods.add(pt["period"])
     dl_period_list = sorted(dl_periods)
     dl_datasets = []
-    for i, group in enumerate(dl):
+    for group in dl:
         period_map = {pt["period"]: pt["ratio"] for pt in group["points"]}
-        color = _PALETTE[i % len(_PALETTE)]
+        color = color_for(group["keyword_group"])
         dl_datasets.append({
             "label": group["keyword_group"],
             "data": [period_map.get(p) for p in dl_period_list],
@@ -282,7 +278,7 @@ def build_dashboard_html(
     eng = analysis["engagement_rates"]
     eng_labels = [item["competitor"] for item in eng]
     eng_values = [item["engagement_rate_pct"] for item in eng]
-    eng_colors = [_PALETTE[i % len(_PALETTE)] for i in range(len(eng))]
+    eng_colors = [color_for(item["competitor"]) for item in eng]
 
     # --- KPI cards ---
     kpi = _kpi_cards(analysis)

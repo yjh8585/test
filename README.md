@@ -138,9 +138,12 @@ python -m competitor_monitor.cli dashboard          # 수집된 데이터 기반
 python -m competitor_monitor.cli dashboard --demo   # 샘플 데이터로 미리보기
 ```
 
-`reports/dashboard.html` 한 파일로 생성되며, 브라우저로 바로 열거나 이메일·GitHub
-Actions 아티팩트로 공유할 수 있습니다. Chart.js(CDN)로 팔로워·구독자 추이, 검색
-점유율(SoV), DataLab 트렌드, 인게이지먼트율 차트와 주목 콘텐츠 표를 렌더링합니다.
+`reports/dashboard.html`(인터랙티브)과 `reports/dashboard.png`(이미지) 두 파일이
+생성됩니다. HTML은 Chart.js(CDN)로 팔로워·구독자 추이, 검색 점유율(SoV), DataLab
+트렌드, 인게이지먼트율 차트와 주목 콘텐츠 표를 렌더링하고, PNG는 matplotlib으로
+동일 지표를 6분할 이미지로 그려 브라우저 없이도(메신저·문서 등) 바로 볼 수 있습니다.
+경쟁사별 색상은 `competitor_monitor/branding.py`의 브랜드 컬러로 모든 대시보드에서
+일관되게 적용됩니다.
 
 ### 2) Streamlit 인터랙티브 대시보드
 
@@ -151,6 +154,21 @@ streamlit run dashboard.py
 경쟁사 필터, KPI 타일, 시계열 라인 차트 등을 인터랙티브하게 탐색할 수 있습니다.
 사이드바에서 **"데모 데이터 사용"** 을 켜면 API 키 없이도 즉시 확인할 수 있습니다.
 (`pip install -r requirements.txt` 시 `streamlit`·`pandas`가 함께 설치됩니다.)
+
+---
+
+## YouTube 채널 ID 찾기
+
+`config.yaml`의 `youtube_channel_id`는 정확한 `UC…` 값이어야 합니다. 브랜드명으로
+실제 채널 ID 후보를 조회해 주는 유틸리티를 제공합니다 (YouTube API 키 필요).
+
+```bash
+python -m competitor_monitor.tools.resolve_channels --config config.yaml --env .env
+```
+
+각 경쟁사별로 검색 결과 후보(제목 + `UC…` ID + 설명)를 출력합니다. 알맞은 ID를
+골라 `config.yaml`에 붙여넣은 뒤 파이프라인을 실행하세요. (키가 없으면 발급 안내와
+함께 종료됩니다 → `docs/API_KEYS.md`)
 
 ---
 

@@ -27,6 +27,7 @@ from competitor_monitor.analysis.metrics import (
     top_content,
     trend_deltas,
 )
+from competitor_monitor.branding import color_for
 from competitor_monitor.fixtures import demo_records
 from competitor_monitor.storage import Storage
 
@@ -207,7 +208,7 @@ if ig_ts_rows:
         index="snapshot_date", columns="competitor", values="followers_count", aggfunc="last"
     )
     ig_pivot.index.name = "날짜"
-    st.line_chart(ig_pivot)
+    st.line_chart(ig_pivot, color=[color_for(c) for c in ig_pivot.columns])
 else:
     st.info(_EMPTY_MSG)
 
@@ -225,7 +226,7 @@ if yt_ts_rows:
         index="snapshot_date", columns="competitor", values="subscriber_count", aggfunc="last"
     )
     yt_pivot.index.name = "날짜"
-    st.line_chart(yt_pivot)
+    st.line_chart(yt_pivot, color=[color_for(c) for c in yt_pivot.columns])
 else:
     st.info(_EMPTY_MSG)
 
@@ -271,7 +272,7 @@ if dl:
     if dl_frames:
         dl_df = pd.concat(dl_frames, axis=1).sort_index()
         dl_df.index.name = "날짜"
-        st.line_chart(dl_df)
+        st.line_chart(dl_df, color=[color_for(c) for c in dl_df.columns])
     else:
         st.info(_EMPTY_MSG)
 else:
