@@ -1,0 +1,17 @@
+# Secrets & local config
+.env
+config.yaml
+
+# Data & generated artifacts
+data/
+reports/
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+.DS_Store
